@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+@theme {
+  --color-soap-beige: #F5F5F4;
+  --color-soap-wood: #78716C;
+  --color-soap-stone: #44403C;
+  --color-soap-accent: #A8A29E;
+}
