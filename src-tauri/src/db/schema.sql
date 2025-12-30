@@ -18,7 +18,7 @@ CREATE TABLE suppliers (
     note        TEXT
 );
 
-CREATE TABLE inventory_logs (
+CREATE TABLE material_inventory_logs (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     material_id   INTEGER NOT NULL,
     change_amount REAL NOT NULL,      -- +進貨 / -消耗

@@ -24,7 +24,9 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             commands::material_cmd::list_materials,
-            commands::material_cmd::change_inventory
+            commands::material_cmd::update_material_inventory,
+            commands::material_cmd::add_material,
+            commands::material_cmd::update_material,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
