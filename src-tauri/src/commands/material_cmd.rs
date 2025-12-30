@@ -1,10 +1,7 @@
 use sqlx::{SqlitePool, Transaction};
 use tauri::State;
 
-use crate::models::material::Material;
-use crate::models::requests::{
-    CreateMaterialRequest, MaterialInventoryChangeRequest, UpdateMaterialRequest,
-};
+use crate::models::material::{Material, CreateMaterialRequest, MaterialInventoryChangeRequest, UpdateMaterialRequest};
 
 #[tauri::command]
 pub async fn list_materials(pool: State<'_, SqlitePool>) -> Result<Vec<Material>, String> {
@@ -94,14 +91,13 @@ pub async fn update_material_inventory(
     sqlx::query(
         r#"
         INSERT INTO material_inventory_logs
-        (material_id, change_amount, reason, reference_id, note, created_at)
+        (material_id, change_amount, reason, note, created_at)
         VALUES (?, ?, ?, ?, ?, ?)
         "#,
     )
     .bind(req.material_id)
     .bind(req.change_amount)
     .bind(&req.action_type)
-    .bind(req.reference_id)
     .bind(req.note.as_deref())
     .bind(&now)
     .execute(&mut *tx)

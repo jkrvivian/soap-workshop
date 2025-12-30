@@ -23,7 +23,7 @@ CREATE TABLE material_inventory_logs (
     material_id   INTEGER NOT NULL,
     change_amount REAL NOT NULL,      -- +進貨 / -消耗
     reason        TEXT NOT NULL,       -- purchase / production / adjust
-    reference_id  INTEGER,             -- 對應批次或訂單
+    -- reference_id  INTEGER,             -- 對應批次或訂單
     note          TEXT,
     created_at    TEXT NOT NULL,
     FOREIGN KEY(material_id) REFERENCES materials(id)
