@@ -5,7 +5,7 @@ use sqlx::FromRow;
 pub struct Material {
     pub id: i64,
     pub name: String,
-    pub category: Option<String>,
+    pub category: String,
     pub unit: String,
     pub current_stock: f64,
     pub low_stock_alert: Option<f64>,
