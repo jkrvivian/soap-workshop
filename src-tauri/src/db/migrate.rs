@@ -1,22 +1,21 @@
-use sqlx::{SqlitePool, Row};
+use sqlx::{Row, SqlitePool};
 
 pub async fn migrate(pool: &SqlitePool) -> anyhow::Result<()> {
-    let version: i64 =
-        sqlx::query_scalar("PRAGMA user_version")
-            .fetch_one(pool)
-            .await?;
+    let version: i64 = sqlx::query_scalar("PRAGMA user_version")
+        .fetch_one(pool)
+        .await?;
 
     if version == 0 {
         sqlx::query(include_str!("schema.sql"))
             .execute(pool)
             .await?;
 
-        sqlx::query("PRAGMA user_version = 1")
-            .execute(pool)
-            .await?;
+        sqlx::query("PRAGMA user_version = 1").execute(pool).await?;
     }
 
-    seed_test_data(pool).await.expect("Failed to seed test data");
+    seed_test_data(pool)
+        .await
+        .expect("Failed to seed test data");
 
     Ok(())
 }

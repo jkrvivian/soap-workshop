@@ -1,12 +1,13 @@
-use sqlx::{SqlitePool, sqlite::SqlitePoolOptions};
+use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
 use tauri::Manager;
 
 pub async fn connect(app: &tauri::AppHandle) -> anyhow::Result<SqlitePool> {
     // Use project db directory
-    let mut path = app.path()
+    let mut path = app
+        .path()
         .app_data_dir()
         .expect("failed to get app data dir");
-    
+
     std::fs::create_dir_all(&path)?;
     path.push("soap.db");
 
