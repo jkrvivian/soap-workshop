@@ -32,8 +32,9 @@ CREATE TABLE material_inventory_logs (
 CREATE TABLE products (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     name            TEXT NOT NULL,
+    category        TEXT,
     sku             TEXT,
-    unit            TEXT NOT NULL,     -- pcs
+    unit            TEXT NOT NULL,
     current_stock   INTEGER NOT NULL DEFAULT 0,
     note            TEXT,
     created_at      TEXT NOT NULL

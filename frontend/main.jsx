@@ -5,6 +5,7 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './src/components/Layout.tsx';
 import Materials from './src/pages/Materials.tsx';
+import Products from './src/pages/Products.tsx';
 
 function Dashboard() {
   return (
@@ -38,7 +39,7 @@ function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<Dashboard />} />
           <Route path="materials" element={<Materials />} />
-          <Route path="products" element={<div className="p-8">產品管理 (待開發)</div>} />
+          <Route path="products" element={<Products />} />
           <Route path="movements" element={<div className="p-8">庫存異動 (待開發)</div>} />
           <Route path="batches" element={<div className="p-8">生產批次 (待開發)</div>} />
           <Route path="customers" element={<div className="p-8">客戶管理 (待開發)</div>} />
