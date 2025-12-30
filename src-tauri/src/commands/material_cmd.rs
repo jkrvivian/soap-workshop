@@ -1,7 +1,9 @@
 use sqlx::{SqlitePool, Transaction};
 use tauri::State;
 
-use crate::models::material::{Material, CreateMaterialRequest, MaterialInventoryChangeRequest, UpdateMaterialRequest};
+use crate::models::material::{
+    CreateMaterialRequest, Material, MaterialInventoryChangeRequest, UpdateMaterialRequest,
+};
 
 #[tauri::command]
 pub async fn list_materials(pool: State<'_, SqlitePool>) -> Result<Vec<Material>, String> {
