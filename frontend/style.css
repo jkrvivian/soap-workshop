@@ -6,3 +6,14 @@
   --color-soap-stone: #44403C;
   --color-soap-accent: #A8A29E;
 }
+
+/* Hide number input spinner arrows */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}

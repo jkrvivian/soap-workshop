@@ -1,9 +1,7 @@
-use sqlx::{SqlitePool, Transaction};
+use sqlx::SqlitePool;
 use tauri::State;
 
-use crate::models::product::{
-    CreateProductRequest, Product, ProductInventoryChangeRequest, UpdateProductRequest,
-};
+use crate::models::product::{CreateProductRequest, Product, UpdateProductRequest};
 
 #[tauri::command]
 pub async fn list_products(pool: State<'_, SqlitePool>) -> Result<Vec<Product>, String> {
@@ -66,31 +64,6 @@ pub async fn update_product(
     .await
     .map_err(|e| e.to_string())?;
 
-    Ok(())
-}
-
-#[tauri::command]
-pub async fn update_product_inventory(
-    pool: State<'_, SqlitePool>,
-    req: ProductInventoryChangeRequest,
-) -> Result<(), String> {
-    let mut tx: Transaction<'_, sqlx::Sqlite> = pool.begin().await.map_err(|e| e.to_string())?;
-
-    // 1. Update product stock
-    sqlx::query(
-        r#"
-        UPDATE products
-        SET current_stock = current_stock + ?
-        WHERE id = ?
-        "#,
-    )
-    .bind(req.change_amount)
-    .bind(req.product_id)
-    .execute(&mut *tx)
-    .await
-    .map_err(|e| e.to_string())?;
-
-    tx.commit().await.map_err(|e| e.to_string())?;
     Ok(())
 }
 

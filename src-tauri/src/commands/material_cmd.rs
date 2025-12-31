@@ -1,9 +1,7 @@
-use sqlx::{SqlitePool, Transaction};
+use sqlx::SqlitePool;
 use tauri::State;
 
-use crate::models::material::{
-    CreateMaterialRequest, Material, MaterialInventoryChangeRequest, UpdateMaterialRequest,
-};
+use crate::models::material::{CreateMaterialRequest, Material, UpdateMaterialRequest};
 
 #[tauri::command]
 pub async fn list_materials(pool: State<'_, SqlitePool>) -> Result<Vec<Material>, String> {
@@ -78,49 +76,6 @@ pub async fn update_material(
     .await
     .map_err(|e| e.to_string())?;
 
-    Ok(())
-}
-
-#[tauri::command]
-pub async fn update_material_inventory(
-    pool: State<'_, SqlitePool>,
-    req: MaterialInventoryChangeRequest,
-) -> Result<(), String> {
-    let mut tx: Transaction<'_, sqlx::Sqlite> = pool.begin().await.map_err(|e| e.to_string())?;
-
-    // 1. Record inventory change log
-    let now = chrono::Utc::now().to_rfc3339();
-    sqlx::query(
-        r#"
-        INSERT INTO material_inventory_logs
-        (material_id, change_amount, reason, note, created_at)
-        VALUES (?, ?, ?, ?, ?, ?)
-        "#,
-    )
-    .bind(req.material_id)
-    .bind(req.change_amount)
-    .bind(&req.action_type)
-    .bind(req.note.as_deref())
-    .bind(&now)
-    .execute(&mut *tx)
-    .await
-    .map_err(|e| e.to_string())?;
-
-    // 2. Update material stock
-    sqlx::query(
-        r#"
-        UPDATE materials
-        SET current_stock = current_stock + ?
-        WHERE id = ?
-        "#,
-    )
-    .bind(req.change_amount)
-    .bind(req.material_id)
-    .execute(&mut *tx)
-    .await
-    .map_err(|e| e.to_string())?;
-
-    tx.commit().await.map_err(|e| e.to_string())?;
     Ok(())
 }
 

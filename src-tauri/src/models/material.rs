@@ -14,14 +14,6 @@ pub struct Material {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct MaterialInventoryChangeRequest {
-    pub material_id: i64,
-    pub change_amount: f64, // Changed from i64 to f64 to match schema REAL type
-    pub action_type: String, // Maps to 'reason' in inventory_logs
-    pub note: Option<String>,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
 pub struct CreateMaterialRequest {
     pub name: String,
     pub category: Option<String>,

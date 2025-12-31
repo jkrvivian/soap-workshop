@@ -26,11 +26,3 @@ pub struct UpdateProductRequest {
     pub category: String,
     pub note: Option<String>,
 }
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct ProductInventoryChangeRequest {
-    pub product_id: i64,
-    pub change_amount: i64,
-    pub action_type: String, // purchase / production / sale / adjust
-    pub note: Option<String>,
-}

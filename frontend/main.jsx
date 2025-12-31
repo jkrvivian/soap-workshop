@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './src/components/Layout.tsx';
 import Materials from './src/pages/Materials.tsx';
 import Products from './src/pages/Products.tsx';
+import StockMovements from './src/pages/StockMovements.tsx';
 
 function Dashboard() {
   return (
@@ -40,7 +41,7 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="materials" element={<Materials />} />
           <Route path="products" element={<Products />} />
-          <Route path="movements" element={<div className="p-8">庫存異動 (待開發)</div>} />
+          <Route path="movements" element={<StockMovements />} />
           <Route path="batches" element={<div className="p-8">生產批次 (待開發)</div>} />
           <Route path="customers" element={<div className="p-8">客戶管理 (待開發)</div>} />
           <Route path="settings" element={<div className="p-8">設定 (待開發)</div>} />

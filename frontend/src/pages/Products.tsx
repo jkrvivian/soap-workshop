@@ -242,11 +242,13 @@ function MovementForm({
     e.preventDefault();
 
     try {
-      await invoke("update_product_inventory", {
+      await invoke("add_product_inventory", {
         req: {
-          product_id: item.id,
-          change_amount: mType === "out" ? -qty : qty,
+          item_id: item.id,
+          item_type: "product",
+          change_amount: qty,
           action_type: mType,
+          note: item.note,
         },
       });
       onFinish();

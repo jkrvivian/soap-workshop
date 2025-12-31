@@ -18,16 +18,22 @@ CREATE TABLE suppliers (
     note        TEXT
 );
 
-CREATE TABLE material_inventory_logs (
-    id            INTEGER PRIMARY KEY AUTOINCREMENT,
-    material_id   INTEGER NOT NULL,
-    change_amount REAL NOT NULL,      -- +進貨 / -消耗
-    reason        TEXT NOT NULL,       -- purchase / production / adjust
-    -- reference_id  INTEGER,             -- 對應批次或訂單
-    note          TEXT,
-    created_at    TEXT NOT NULL,
-    FOREIGN KEY(material_id) REFERENCES materials(id)
+CREATE TABLE inventory_logs (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    item_type       TEXT NOT NULL,         -- 'material' or 'product'
+    item_id         INTEGER NOT NULL,      -- material_id or product_id
+    change_amount   REAL NOT NULL,         -- positive or negative
+    old_stock       REAL NOT NULL,         -- stock before change
+    new_stock       REAL NOT NULL,         -- stock after change
+    action_type     TEXT NOT NULL,         -- 'purchase', 'production', 'sale', 'adjust'
+    note            TEXT,
+    created_at      TEXT NOT NULL,
+    FOREIGN KEY(item_id) REFERENCES materials(id),
+    FOREIGN KEY(item_id) REFERENCES products(id)
 );
+
+CREATE INDEX idx_inventory_logs_item ON inventory_logs(item_type, item_id);
+CREATE INDEX idx_inventory_logs_created ON inventory_logs(created_at DESC);
 
 CREATE TABLE products (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
