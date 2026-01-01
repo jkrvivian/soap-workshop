@@ -6,6 +6,7 @@ use tauri::Manager;
 
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             let app_handle = app.handle().clone();
 
@@ -25,6 +26,8 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            commands::db_cmd::export_database,
+            commands::db_cmd::import_database,
             commands::material_cmd::list_materials,
             commands::material_cmd::add_material,
             commands::material_cmd::update_material,

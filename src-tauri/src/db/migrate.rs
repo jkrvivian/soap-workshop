@@ -1,33 +1,100 @@
-use sqlx::{Row, SqlitePool};
+use sqlx::{Row, SqlitePool, Transaction};
 
-pub async fn migrate(pool: &SqlitePool) -> anyhow::Result<()> {
-    let version: i64 = sqlx::query_scalar("PRAGMA user_version")
-        .fetch_one(pool)
-        .await?;
+/// Migration system that tracks applied migrations and runs them incrementally
+pub async fn migrate(pool: &SqlitePool) -> anyhow::Result<(), String> {
+    // Create migrations tracking table if it doesn't exist
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS _migrations (
+            version INTEGER PRIMARY KEY,
+            name TEXT NOT NULL,
+            applied_at TEXT NOT NULL
+        )
+        "#,
+    )
+    .execute(pool)
+    .await
+    .map_err(|e| e.to_string())?;
 
-    if version == 0 {
-        sqlx::query(include_str!("schema.sql"))
-            .execute(pool)
-            .await?;
+    // Run all migrations in order
+    run_migration(
+        pool,
+        1,
+        "001_initial_schema",
+        include_str!("migrations/001_initial_schema.sql"),
+    )
+    .await?;
+    // Add future migrations here:
+    // run_migration(pool, 2, "002_add_supplier_column", include_str!("migrations/002_add_supplier_column.sql")).await?;
 
-        sqlx::query("PRAGMA user_version = 1").execute(pool).await?;
-    }
-
-    seed_test_data(pool)
-        .await
-        .expect("Failed to seed test data");
+    // Seed test data only on fresh installations
+    seed_test_data(pool).await.map_err(|e| e.to_string())?;
 
     Ok(())
 }
 
+/// Runs a migration if it hasn't been applied yet
+async fn run_migration(
+    pool: &SqlitePool,
+    version: i64,
+    name: &str,
+    sql: &str,
+) -> anyhow::Result<(), String> {
+    // Check if this migration has already been applied
+    let applied: bool =
+        sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM _migrations WHERE version = ?)")
+            .bind(version)
+            .fetch_one(pool)
+            .await
+            .map_err(|e| e.to_string())?;
+
+    if !applied {
+        let mut tx: Transaction<'_, sqlx::Sqlite> =
+            pool.begin().await.map_err(|e| e.to_string())?;
+
+        println!("Running migration {}: {}", version, name);
+
+        // Execute the migration SQL
+        sqlx::query(sql)
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        // Record that this migration has been applied
+        sqlx::query(
+            "INSERT INTO _migrations (version, name, applied_at) VALUES (?, ?, datetime('now'))",
+        )
+        .bind(version)
+        .bind(name)
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| e.to_string())?;
+
+        tx.commit().await.map_err(|e| e.to_string())?;
+        println!("Migration {} completed successfully", version);
+    } else {
+        println!("Migration {} already applied, skipping", version);
+    }
+
+    Ok(())
+}
+/// Seeds initial test data for development/demo purposes
+/// Only runs if database is empty (no materials and no products)
 async fn seed_test_data(pool: &SqlitePool) -> Result<(), sqlx::Error> {
     let materials_count: i64 = sqlx::query("SELECT COUNT(*) FROM materials")
         .fetch_one(pool)
         .await?
         .get(0);
 
-    println!("Materials count: {}", materials_count);
-    if materials_count == 0 {
+    let products_count: i64 = sqlx::query("SELECT COUNT(*) FROM products")
+        .fetch_one(pool)
+        .await?
+        .get(0);
+
+    // Only seed if completely empty (fresh installation)
+    if materials_count == 0 && products_count == 0 {
+        println!("Seeding initial test data...");
+
         sqlx::query(
             r#"
             INSERT INTO materials (name, category, unit, current_stock, low_stock_alert, created_at) VALUES
@@ -39,15 +106,7 @@ async fn seed_test_data(pool: &SqlitePool) -> Result<(), sqlx::Error> {
         )
         .execute(pool)
         .await?;
-    }
 
-    let products_count: i64 = sqlx::query("SELECT COUNT(*) FROM products")
-        .fetch_one(pool)
-        .await?
-        .get(0);
-
-    println!("Products count: {}", products_count);
-    if products_count == 0 {
         sqlx::query(
             r#"
             INSERT INTO products (name, category, unit, current_stock, note, created_at) VALUES
@@ -59,6 +118,8 @@ async fn seed_test_data(pool: &SqlitePool) -> Result<(), sqlx::Error> {
         )
         .execute(pool)
         .await?;
+
+        println!("Test data seeded successfully");
     }
 
     Ok(())

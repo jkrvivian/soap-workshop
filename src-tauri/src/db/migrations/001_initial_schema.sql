@@ -1,3 +1,4 @@
+-- Migration 001: Initial schema
 CREATE TABLE materials (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     name            TEXT NOT NULL,
