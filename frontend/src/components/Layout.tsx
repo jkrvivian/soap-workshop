@@ -14,8 +14,8 @@ const navItems = [
   { to: "/materials", label: "原料管理", icon: <Beaker size={20} /> },
   { to: "/products", label: "產品管理", icon: <Package size={20} /> },
   { to: "/movements", label: "庫存異動", icon: <ArrowLeftRight size={20} /> },
-  { to: "/batches", label: "生產批次", icon: <Layers size={20} /> },
-  { to: "/customers", label: "客戶管理", icon: <Users size={20} /> },
+  // { to: "/batches", label: "生產批次", icon: <Layers size={20} /> },
+  // { to: "/customers", label: "客戶管理", icon: <Users size={20} /> },
   { to: "/settings", label: "設定", icon: <Settings size={20} /> },
 ];
 
