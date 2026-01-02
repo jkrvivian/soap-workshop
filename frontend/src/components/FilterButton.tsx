@@ -4,7 +4,6 @@ interface FilterButtonProps {
   label: string;
   isActive: boolean;
   onClick: () => void;
-  icon?: React.ReactNode;
 }
 
 export function FilterButton({ label, isActive, onClick }: FilterButtonProps) {
