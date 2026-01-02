@@ -10,16 +10,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 
-interface Material {
-  id: number;
-  name: string;
-  category: string;
-  unit: string;
-  current_stock: number;
-  low_stock_alert: number | null;
-  note: string | null;
-  created_at: string;
-}
+import { Material } from "../types/type";
 
 type ViewMode = "list" | "add" | "edit" | "movement";
 
