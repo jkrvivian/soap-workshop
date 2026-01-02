@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import {
-  Filter,
   Plus,
   AlertCircle,
   Edit2,
@@ -12,6 +11,8 @@ import {
 } from "lucide-react";
 
 import { Product } from "../types/type";
+import { PRODUCT_FILTERS, ProductFilterType } from "../types/filters";
+import { FilterButton } from "../components/FilterButton";
 
 type ViewMode = "list" | "add" | "edit" | "movement";
 
@@ -20,9 +21,7 @@ export default function Products() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<
-    "all" | "hair" | "face" | "body" | "house"
-  >("all");
+  const [filter, setFilter] = useState<ProductFilterType>("all");
 
   // UI mode switching
   const [viewMode, setViewMode] = useState<ViewMode>("list");
@@ -46,24 +45,9 @@ export default function Products() {
   }, [loadProducts]);
 
   const getFilteredProducts = () => {
-    return products.filter((m) => {
-      switch (filter) {
-        case "body":
-          return m.category === "沐浴";
-
-        case "face":
-          return m.category === "洗顏";
-
-        case "hair":
-          return m.category === "洗髮";
-
-        case "house":
-          return m.category === "家事";
-
-        case "all":
-        default:
-          return true;
-      }
+    return products.filter((p) => {
+      if (filter === "all") return true;
+      return p.category === PRODUCT_FILTERS[filter].label;
     });
   };
 
@@ -111,58 +95,16 @@ export default function Products() {
           </button>
         </div>
 
-        {/* 快捷篩選列 */}
+        {/* filters */}
         <div className="flex gap-4 overflow-x-auto pb-2 items-center">
-          <button
-            onClick={() => setFilter("all")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${
-              filter === "all"
-                ? "bg-soap-wood text-white shadow-sm"
-                : "bg-white border border-stone-200 text-soap-accent hover:border-soap-wood"
-            }`}
-          >
-            <Filter size={14} /> 全部
-          </button>
-          <button
-            onClick={() => setFilter("hair")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${
-              filter === "hair"
-                ? "bg-soap-wood text-white shadow-sm"
-                : "bg-white border border-stone-200 text-soap-accent hover:border-soap-wood"
-            }`}
-          >
-            洗髮
-          </button>
-          <button
-            onClick={() => setFilter("face")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${
-              filter === "face"
-                ? "bg-soap-wood text-white shadow-sm"
-                : "bg-white border border-stone-200 text-soap-accent hover:border-soap-wood"
-            }`}
-          >
-            洗顏
-          </button>
-          <button
-            onClick={() => setFilter("body")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${
-              filter === "body"
-                ? "bg-soap-wood text-white shadow-sm"
-                : "bg-white border border-stone-200 text-soap-accent hover:border-soap-wood"
-            }`}
-          >
-            沐浴
-          </button>
-          <button
-            onClick={() => setFilter("house")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${
-              filter === "house"
-                ? "bg-soap-wood text-white shadow-sm"
-                : "bg-white border border-stone-200 text-soap-accent hover:border-soap-wood"
-            }`}
-          >
-            家事
-          </button>
+          {Object.values(PRODUCT_FILTERS).map((filterConfig) => (
+            <FilterButton
+              key={filterConfig.key}
+              label={filterConfig.label}
+              isActive={filter === filterConfig.key}
+              onClick={() => setFilter(filterConfig.key as ProductFilterType)}
+            />
+          ))}
         </div>
 
         {loading && <p className="text-center py-8">載入中...</p>}

@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import {
-  Filter,
   Plus,
   AlertCircle,
   Edit2,
@@ -12,6 +11,8 @@ import {
 } from "lucide-react";
 
 import { Material } from "../types/type";
+import { MATERIAL_FILTERS, MaterialFilterType } from "../types/filters";
+import { FilterButton } from "../components/FilterButton";
 
 type ViewMode = "list" | "add" | "edit" | "movement";
 
@@ -20,9 +21,7 @@ export default function Materials() {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<
-    "all" | "oil" | "essential_oil" | "chem"
-  >("all");
+  const [filter, setFilter] = useState<MaterialFilterType>("all");
 
   // UI mode switching
   const [viewMode, setViewMode] = useState<ViewMode>("list");
@@ -47,20 +46,8 @@ export default function Materials() {
 
   const getFilteredMaterials = () => {
     return materials.filter((m) => {
-      switch (filter) {
-        case "oil":
-          return m.category === "油脂";
-
-        case "essential_oil":
-          return m.category === "精油";
-
-        case "chem":
-          return m.category === "添加物" || m.category === "鹼";
-
-        case "all":
-        default:
-          return true;
-      }
+      if (filter === "all") return true;
+      return m.category == MATERIAL_FILTERS[filter].label;
     });
   };
 
@@ -105,48 +92,16 @@ export default function Materials() {
           </button>
         </div>
 
-        {/* 快捷篩選列 */}
+        {/* filters */}
         <div className="flex gap-4 overflow-x-auto pb-2 items-center">
-          <button
-            onClick={() => setFilter("all")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${
-              filter === "all"
-                ? "bg-soap-wood text-white shadow-sm"
-                : "bg-white border border-stone-200 text-soap-accent hover:border-soap-wood"
-            }`}
-          >
-            <Filter size={14} /> 全部
-          </button>
-          <button
-            onClick={() => setFilter("oil")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${
-              filter === "oil"
-                ? "bg-soap-wood text-white shadow-sm"
-                : "bg-white border border-stone-200 text-soap-accent hover:border-soap-wood"
-            }`}
-          >
-            油脂
-          </button>
-          <button
-            onClick={() => setFilter("essential_oil")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${
-              filter === "essential_oil"
-                ? "bg-soap-wood text-white shadow-sm"
-                : "bg-white border border-stone-200 text-soap-accent hover:border-soap-wood"
-            }`}
-          >
-            精油
-          </button>
-          <button
-            onClick={() => setFilter("chem")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${
-              filter === "chem"
-                ? "bg-soap-wood text-white shadow-sm"
-                : "bg-white border border-stone-200 text-soap-accent hover:border-soap-wood"
-            }`}
-          >
-            鹼 & 添加物
-          </button>
+          {Object.values(MATERIAL_FILTERS).map((m) => (
+            <FilterButton
+              key={m.key}
+              label={m.label}
+              isActive={filter === m.key}
+              onClick={() => setFilter(m.key)}
+            />
+          ))}
         </div>
 
         {loading && <p className="text-center py-8">載入中...</p>}
