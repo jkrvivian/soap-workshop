@@ -10,6 +10,7 @@ pub struct Product {
     pub current_stock: i64,
     pub note: Option<String>,
     pub created_at: String,
+    pub deleted_at: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -25,4 +26,9 @@ pub struct UpdateProductRequest {
     pub name: String,
     pub category: String,
     pub note: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct RemoveProductRequest {
+    pub id: i64,
 }

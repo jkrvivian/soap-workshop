@@ -7,7 +7,8 @@ CREATE TABLE materials (
     current_stock   REAL NOT NULL DEFAULT 0,
     low_stock_alert REAL,                   -- 低於多少提醒
     note            TEXT,
-    created_at      TEXT NOT NULL
+    created_at      TEXT NOT NULL,
+    deleted_at      TEXT                    -- soft delete timestamp
 );
 
 CREATE TABLE suppliers (
@@ -33,6 +34,7 @@ CREATE TABLE inventory_logs (
 
 CREATE INDEX idx_inventory_logs_item ON inventory_logs(item_type, item_id);
 CREATE INDEX idx_inventory_logs_created ON inventory_logs(created_at DESC);
+CREATE INDEX idx_materials_deleted_at ON materials(deleted_at);
 
 CREATE TABLE products (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -42,8 +44,11 @@ CREATE TABLE products (
     unit            TEXT NOT NULL,
     current_stock   INTEGER NOT NULL DEFAULT 0,
     note            TEXT,
-    created_at      TEXT NOT NULL
+    created_at      TEXT NOT NULL,
+    deleted_at      TEXT                    -- soft delete timestamp
 );
+
+CREATE INDEX idx_products_deleted_at ON products(deleted_at);
 
 CREATE TABLE production_batches (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,

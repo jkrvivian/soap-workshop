@@ -11,6 +11,7 @@ pub struct Material {
     pub low_stock_alert: Option<f64>,
     pub note: Option<String>,
     pub created_at: String,
+    pub deleted_at: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -30,4 +31,9 @@ pub struct UpdateMaterialRequest {
     pub unit: String,
     pub low_stock_alert: Option<f64>,
     pub note: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct RemoveMaterialRequest {
+    pub id: i64,
 }
