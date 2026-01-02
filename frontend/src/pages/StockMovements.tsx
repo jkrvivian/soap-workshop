@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import {
-  ArrowLeftRight,
   Plus,
   Search,
   Filter,
@@ -22,10 +21,12 @@ type ViewMode = "list" | "create";
 export default function StockMovements() {
   const [movements, setMovements] = useState<Movement[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<
-    "all" | "today" | "material" | "product"
+    "all" | "today" | "custom" | "material" | "product"
   >("all");
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const loadData = async () => {
     try {
@@ -33,8 +34,6 @@ export default function StockMovements() {
       setMovements(data);
     } catch (e) {
       console.error("載入失敗", e);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -43,19 +42,42 @@ export default function StockMovements() {
   }, []);
 
   const getFilteredMovements = () => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
     return movements.filter((m) => {
+      const movementDate = new Date(m.created_at);
+      const movementDay = new Date(
+        movementDate.getFullYear(),
+        movementDate.getMonth(),
+        movementDate.getDate(),
+      );
+
       switch (filter) {
         case "today":
-          const movementDate = new Date(m.created_at);
-          movementDate.setHours(0, 0, 0, 0);
-          return movementDate.getTime() === today.getTime();
+          return movementDay.getTime() === today.getTime();
+
+        case "custom":
+          if (!startDate && !endDate) return true;
+
+          const start = startDate ? new Date(startDate) : null;
+          const end = endDate ? new Date(endDate) : null;
+
+          if (start && end) {
+            return movementDate >= start && movementDate <= end;
+          } else if (start) {
+            return movementDate >= start;
+          } else if (end) {
+            return movementDate <= end;
+          }
+          return true;
+
         case "material":
           return m.item_type === "material";
+
         case "product":
           return m.item_type === "product";
+
         case "all":
         default:
           return true;
@@ -85,10 +107,10 @@ export default function StockMovements() {
         </div>
 
         {/* 快捷篩選列 */}
-        <div className="flex gap-4 overflow-x-auto pb-2">
+        <div className="flex gap-4 overflow-x-auto pb-2 items-center">
           <button
             onClick={() => setFilter("all")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${
               filter === "all"
                 ? "bg-soap-wood text-white shadow-sm"
                 : "bg-white border border-stone-200 text-soap-accent hover:border-soap-wood"
@@ -98,7 +120,7 @@ export default function StockMovements() {
           </button>
           <button
             onClick={() => setFilter("today")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${
               filter === "today"
                 ? "bg-soap-wood text-white shadow-sm"
                 : "bg-white border border-stone-200 text-soap-accent hover:border-soap-wood"
@@ -108,7 +130,7 @@ export default function StockMovements() {
           </button>
           <button
             onClick={() => setFilter("material")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${
               filter === "material"
                 ? "bg-soap-wood text-white shadow-sm"
                 : "bg-white border border-stone-200 text-soap-accent hover:border-soap-wood"
@@ -118,7 +140,7 @@ export default function StockMovements() {
           </button>
           <button
             onClick={() => setFilter("product")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${
               filter === "product"
                 ? "bg-soap-wood text-white shadow-sm"
                 : "bg-white border border-stone-200 text-soap-accent hover:border-soap-wood"
@@ -126,7 +148,60 @@ export default function StockMovements() {
           >
             成品類
           </button>
+
+          {/* Date Range Picker Toggle */}
+          <button
+            onClick={() => setShowDatePicker(!showDatePicker)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${
+              filter === "custom"
+                ? "bg-soap-wood text-white shadow-sm"
+                : "bg-white border border-stone-200 text-soap-accent hover:border-soap-wood"
+            }`}
+          >
+            <Calendar size={14} /> 自訂日期
+          </button>
         </div>
+
+        {/* Date Range Inputs (Collapsible) */}
+        {showDatePicker && (
+          <div className="flex items-center gap-3 p-4 bg-stone-50 border border-stone-200 rounded-xl">
+            <label className="text-sm font-bold text-soap-stone whitespace-nowrap">
+              日期範圍：
+            </label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => {
+                setStartDate(e.target.value);
+                setFilter("custom");
+              }}
+              className="px-3 py-2 border border-stone-200 rounded-lg text-sm focus:ring-soap-wood focus:border-soap-wood"
+              placeholder="開始日期"
+            />
+            <span className="text-stone-400">至</span>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => {
+                setEndDate(e.target.value);
+                setFilter("custom");
+              }}
+              className="px-3 py-2 border border-stone-200 rounded-lg text-sm focus:ring-soap-wood focus:border-soap-wood"
+              placeholder="結束日期"
+            />
+            <button
+              onClick={() => {
+                setStartDate("");
+                setEndDate("");
+                setFilter("all");
+                setShowDatePicker(false);
+              }}
+              className="px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            >
+              清除
+            </button>
+          </div>
+        )}
 
         {/* 異動列表 */}
         <div className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
