@@ -8,6 +8,7 @@ import {
   Save,
   ChevronLeft,
   AlertTriangle,
+  Trash2,
 } from "lucide-react";
 
 import { Product } from "../types/type";
@@ -52,6 +53,21 @@ export default function Products() {
   };
 
   const filteredProducts = getFilteredProducts();
+
+  const deleteProduct = useCallback(
+    async (productId: number) => {
+      setLoading(true);
+      try {
+        await invoke("remove_product", { product: { id: productId } });
+        await loadProducts();
+      } catch (err) {
+        setError(err as string);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [loadProducts],
+  );
 
   // --- keyboard shortcuts ---
   useEffect(() => {
@@ -187,6 +203,16 @@ export default function Products() {
                           title="編輯"
                         >
                           <Edit2 size={16} />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedItem(m);
+                            deleteProduct(m.id);
+                          }}
+                          className="p-2 hover:bg-soap-beige rounded-full text-soap-accent transition-colors"
+                          title="刪除"
+                        >
+                          <Trash2 size={16} />
                         </button>
                       </td>
                     </tr>

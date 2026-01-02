@@ -8,6 +8,7 @@ import {
   Save,
   ChevronLeft,
   AlertTriangle,
+  Trash2,
 } from "lucide-react";
 
 import { Material } from "../types/type";
@@ -52,6 +53,21 @@ export default function Materials() {
   };
 
   const filteredMaterials = getFilteredMaterials();
+
+  const deleteMaterial = useCallback(
+    async (materialId: number) => {
+      setLoading(true);
+      try {
+        await invoke("remove_material", { material: { id: materialId } });
+        await loadMaterials();
+      } catch (err) {
+        setError(err as string);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [loadMaterials],
+  );
 
   // --- keyboard shortcuts ---
   useEffect(() => {
@@ -184,6 +200,15 @@ export default function Materials() {
                           title="編輯"
                         >
                           <Edit2 size={16} />
+                        </button>
+                        <button
+                          onClick={() => {
+                            deleteMaterial(m.id);
+                          }}
+                          className="p-2 hover:bg-soap-beige rounded-full text-soap-accent transition-colors"
+                          title="刪除"
+                        >
+                          <Trash2 size={16} />
                         </button>
                       </td>
                     </tr>
