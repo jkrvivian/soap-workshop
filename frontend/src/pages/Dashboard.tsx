@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { invoke } from "@tauri-apps/api/core";
 import {
+  AlertCircle,
   AlertTriangle,
   Activity,
   Package,
@@ -14,6 +15,8 @@ import { Movement, Material, Product } from "../types/type";
 import MovementRow from "../components/MovementRow";
 
 export default function Dashboard() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [materials, setMaterials] = useState<Material[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [recentMovements, setRecentMovements] = useState<Movement[]>([]);
@@ -21,6 +24,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   const loadData = async () => {
+    setLoading(true);
     try {
       const materials = await invoke<Material[]>("list_materials");
       setMaterials(materials);
@@ -30,6 +34,9 @@ export default function Dashboard() {
       setRecentMovements(movements);
     } catch (e) {
       console.error("載入失敗", e);
+      setError(("載入資料時發生錯誤，請稍後再試。Error:" + e) as string);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -71,6 +78,14 @@ export default function Dashboard() {
           </button>
         </div>
       </div>
+
+      {loading && <p className="text-center py-8">載入中...</p>}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
+          <AlertCircle className="text-red-600" size={20} />
+          <p className="text-red-600 font-medium">錯誤: {error}</p>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard
