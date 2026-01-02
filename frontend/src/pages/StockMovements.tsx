@@ -17,7 +17,6 @@ import {
 import { Movement } from "../types/type";
 import MovementRow from "../components/MovementRow";
 
-
 type ViewMode = "list" | "create";
 
 export default function StockMovements() {
@@ -153,9 +152,7 @@ export default function StockMovements() {
                   </td>
                 </tr>
               ) : (
-                filteredMovements.map((m) => (
-                  <MovementRow m={m} key={m.id} />
-                ))
+                filteredMovements.map((m) => <MovementRow m={m} key={m.id} />)
               )}
             </tbody>
           </table>
