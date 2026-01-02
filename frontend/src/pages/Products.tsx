@@ -379,7 +379,7 @@ function CreateEditForm({
             name: String(payload.name),
             category: String(payload.category),
             unit: String(payload.unit),
-            current_stock: 0,
+            current_stock: Number(payload.current_stock),
             note: payload.note ? String(payload.note) : null,
           },
         });
@@ -456,10 +456,10 @@ function CreateEditForm({
             name="current_stock"
             type="number"
             defaultValue={item?.current_stock ?? 0}
-            disabled
-            className="w-full border border-stone-200 rounded-lg opacity-50 cursor-not-allowed"
+            disabled={viewMode === "edit"}
+            className={`w-full border border-stone-200 rounded-lg ${viewMode === "edit" ? "opacity-50 cursor-not-allowed" : ""}`}
           />
-          <p className="text-xs text-stone-400 mt-1">通過異動功能更新</p>
+          {viewMode === "edit" && <p className="text-xs text-stone-400 mt-1">通過異動功能更新</p>}
         </div>
         <div className="col-span-2">
           <label className="block text-sm font-bold text-soap-stone mb-2">

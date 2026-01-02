@@ -1,4 +1,4 @@
-use sqlx::SqlitePool;
+use sqlx::{SqlitePool, Transaction};
 use tauri::State;
 use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
 
@@ -25,23 +25,50 @@ pub async fn add_product(
     pool: State<'_, SqlitePool>,
     product: CreateProductRequest,
 ) -> Result<(), String> {
+    let mut tx: Transaction<'_, sqlx::Sqlite> = pool.begin().await.map_err(|e| e.to_string())?;
+
     let created_at = chrono::Utc::now().to_rfc3339();
 
-    sqlx::query(
+    let last_insert_id: i64 = sqlx::query_scalar(
         r#"
         INSERT INTO products (name, category, unit, current_stock, note, created_at)
         VALUES (?, ?, ?, ?, ?, ?)
+        RETURNING id
         "#,
     )
     .bind(&product.name)
     .bind(&product.category)
     .bind(&product.unit)
-    .bind(0)
+    .bind(product.current_stock)
     .bind(&product.note)
     .bind(&created_at)
-    .execute(&*pool)
+    .fetch_one(&mut *tx)
     .await
     .map_err(|e| e.to_string())?;
+
+    // if the initial stock is greater than zero, log it as an inventory addition
+    if product.current_stock > 0 {
+        let now = chrono::Utc::now().to_rfc3339();
+        sqlx::query(
+            r#"
+            INSERT INTO inventory_logs (item_id, item_type, action_type, change_amount, old_stock, new_stock, note, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            "#,
+        )
+        .bind(last_insert_id)
+        .bind("product")
+        .bind("in")
+        .bind(product.current_stock)
+        .bind(0)
+        .bind(product.current_stock)
+        .bind(Some("Initial stock".to_string()).as_deref())
+        .bind(&now)
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| e.to_string())?;
+    }
+
+    tx.commit().await.map_err(|e| e.to_string())?;
 
     Ok(())
 }

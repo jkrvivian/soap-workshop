@@ -18,6 +18,7 @@ pub struct CreateProductRequest {
     pub name: String,
     pub category: String,
     pub unit: String,
+    pub current_stock: i64,
     pub note: Option<String>,
 }
 
