@@ -11,11 +11,19 @@ import {
   Trash2,
 } from "lucide-react";
 
-import { Material } from "../types/type";
-import { MATERIAL_FILTERS, MaterialFilterType } from "../types/filters";
+import {
+  Material,
+  ViewMode,
+  MovementActionType,
+  MOVEMENT_ACTION_LIST,
+  MATERIAL_UNIT_LIST,
+} from "../types/type";
+import {
+  MATERIAL_FILTERS,
+  MaterialFilterType,
+  MATERIAL_CATEGORIES,
+} from "../types/filters";
 import { FilterButton } from "../components/FilterButton";
-
-type ViewMode = "list" | "add" | "edit" | "movement";
 
 export default function Materials() {
   // --- state management ---
@@ -272,7 +280,7 @@ function MovementForm({
   item: Material;
   onFinish: () => void;
 }) {
-  const [mType, setMType] = useState<"in" | "out" | "adj">("in");
+  const [mType, setMType] = useState<MovementActionType>("in");
   const [qty, setQty] = useState<number>(0);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -299,7 +307,7 @@ function MovementForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       <div className="flex bg-stone-100 p-1.5 rounded-xl">
-        {(["in", "out", "adj"] as const).map((t) => (
+        {MOVEMENT_ACTION_LIST.map((t) => (
           <button
             key={t}
             type="button"
@@ -421,10 +429,11 @@ function CreateEditForm({
             defaultValue={item?.category ?? "油脂"}
             className="w-full border border-stone-200 rounded-lg"
           >
-            <option>油脂</option>
-            <option>精油</option>
-            <option>添加物</option>
-            <option>鹼液</option>
+            {Object.values(MATERIAL_CATEGORIES).map((f) => (
+              <option key={f} value={f}>
+                {f}
+              </option>
+            ))}
           </select>
         </div>
         <div>
@@ -437,11 +446,11 @@ function CreateEditForm({
             disabled={viewMode === "edit"}
             className={`w-full border border-stone-200 rounded-lg ${viewMode === "edit" ? "opacity-50 cursor-not-allowed" : ""}`}
           >
-            <option>kg</option>
-            <option>g</option>
-            <option>ml</option>
-            <option>L</option>
-            <option>pcs</option>
+            {Object.values(MATERIAL_UNIT_LIST).map((f) => (
+              <option key={f} value={f}>
+                {f}
+              </option>
+            ))}
           </select>
         </div>
         <div className="col-span-2">

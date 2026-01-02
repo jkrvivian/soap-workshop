@@ -11,11 +11,18 @@ import {
   Trash2,
 } from "lucide-react";
 
-import { Product } from "../types/type";
-import { PRODUCT_FILTERS, ProductFilterType } from "../types/filters";
+import {
+  Product,
+  MovementActionType,
+  ViewMode,
+  PRODUCT_UNIT_LIST,
+} from "../types/type";
+import {
+  PRODUCT_FILTERS,
+  ProductFilterType,
+  PRODUCT_CATEGORIES,
+} from "../types/filters";
 import { FilterButton } from "../components/FilterButton";
-
-type ViewMode = "list" | "add" | "edit" | "movement";
 
 export default function Products() {
   // --- state management ---
@@ -277,7 +284,7 @@ function MovementForm({
   item: Product;
   onFinish: () => void;
 }) {
-  const [mType, setMType] = useState<"in" | "out" | "adj">("in");
+  const [mType, setMType] = useState<MovementActionType>("in");
   const [qty, setQty] = useState<number>(0);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -418,10 +425,11 @@ function CreateEditForm({
             defaultValue={item?.category ?? "洗顏"}
             className="w-full border border-stone-200 rounded-lg"
           >
-            <option>洗顏</option>
-            <option>洗髮</option>
-            <option>沐浴</option>
-            <option>家事</option>
+            {Object.values(PRODUCT_CATEGORIES).map((f) => (
+              <option key={f} value={f}>
+                {f}
+              </option>
+            ))}
           </select>
         </div>
         <div>
@@ -430,13 +438,14 @@ function CreateEditForm({
           </label>
           <select
             name="unit"
-            defaultValue={item?.unit ?? "pcs"}
+            defaultValue={item?.unit ?? "個"}
             className={`w-full border border-stone-200 rounded-lg`}
           >
-            <option>個</option>
-            <option>盒</option>
-            <option>組</option>
-            <option>瓶</option>
+            {Object.values(PRODUCT_UNIT_LIST).map((f) => (
+              <option key={f} value={f}>
+                {f}
+              </option>
+            ))}
           </select>
         </div>
         <div>

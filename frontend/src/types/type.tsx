@@ -31,3 +31,26 @@ export interface Movement {
   note: string | null;
   created_at: string;
 }
+
+export const MOVEMENT_ACTIONS = {
+  in: {
+    key: "in",
+    label: "入庫",
+  },
+  out: {
+    key: "out",
+    label: "出庫",
+  },
+  adj: {
+    key: "adj",
+    label: "校準",
+  },
+} as const;
+
+export type MovementActionType = keyof typeof MOVEMENT_ACTIONS;
+export const MOVEMENT_ACTION_LIST = ["in", "out", "adj"] as const;
+
+export type ViewMode = "list" | "add" | "edit" | "movement";
+
+export const MATERIAL_UNIT_LIST = ["mL", "L", "g", "kg"] as const;
+export const PRODUCT_UNIT_LIST = ["個", "盒", "組", "瓶"] as const;
