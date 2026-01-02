@@ -24,6 +24,27 @@ pub async fn list_movements(pool: State<'_, SqlitePool>) -> Result<Vec<Movement>
 }
 
 #[tauri::command]
+pub async fn list_recent_movements(pool: State<'_, SqlitePool>) -> Result<Vec<Movement>, String> {
+    let rows = sqlx::query_as::<_, Movement>(
+        "SELECT 
+            il.*,
+            COALESCE(m.name, p.name) as item_name,
+            COALESCE(m.unit, p.unit) as item_unit,
+            COALESCE(m.category, p.category) as item_category
+        FROM inventory_logs il
+        LEFT JOIN materials m ON il.item_type = 'material' AND il.item_id = m.id
+        LEFT JOIN products p ON il.item_type = 'product' AND il.item_id = p.id
+        ORDER BY il.created_at DESC
+        LIMIT 10",
+    )
+    .fetch_all(&*pool)
+    .await
+    .map_err(|e| e.to_string())?;
+
+    Ok(rows)
+}
+
+#[tauri::command]
 pub async fn add_inventory(
     pool: State<'_, SqlitePool>,
     req: CreateMovementRequest,

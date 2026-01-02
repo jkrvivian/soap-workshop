@@ -16,6 +16,16 @@ pub async fn list_products(pool: State<'_, SqlitePool>) -> Result<Vec<Product>, 
 }
 
 #[tauri::command]
+pub async fn count_products(pool: State<'_, SqlitePool>) -> Result<i64, String> {
+    let count: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM products")
+        .fetch_one(&*pool)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(count.0)
+}
+
+#[tauri::command]
 pub async fn add_product(
     pool: State<'_, SqlitePool>,
     product: CreateProductRequest,

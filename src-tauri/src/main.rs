@@ -29,9 +29,11 @@ fn main() {
             commands::db_cmd::export_database,
             commands::db_cmd::import_database,
             commands::material_cmd::list_materials,
+            commands::material_cmd::count_materials,
             commands::material_cmd::add_material,
             commands::material_cmd::update_material,
             commands::product_cmd::list_products,
+            commands::product_cmd::count_products,
             commands::product_cmd::add_product,
             commands::product_cmd::update_product,
             commands::product_cmd::get_product,
@@ -39,6 +41,7 @@ fn main() {
             commands::movement_cmd::add_inventory,
             commands::movement_cmd::add_product_inventory,
             commands::movement_cmd::add_material_inventory,
+            commands::movement_cmd::list_recent_movements,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
