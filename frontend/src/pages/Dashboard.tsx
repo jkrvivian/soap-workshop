@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { invoke } from "@tauri-apps/api/core";
 import {
@@ -10,70 +10,43 @@ import {
   Beaker,
 } from "lucide-react";
 
-import {Movement} from "../types/type";
+import { Movement, Material, Product } from "../types/type";
 import MovementRow from "../components/MovementRow";
 
-// 定義簡化的資料結構
-interface LowStockItem {
-  id: number;
-  name: string;
-  quantity: number;
-  unit: string;
-  level: "critical" | "warning";
-}
-
 export default function Dashboard() {
-  const [materialCount, setMaterialCount] = useState<number>(0);
-  const [productCount, setProductCount] = useState<number>(0);
+  const [materials, setMaterials] = useState<Material[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [recentMovements, setRecentMovements] = useState<Movement[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const navigate = useNavigate();
 
-  // 這裡未來會接 Tauri Invoke 抓取真實數據
-  const [stats] = useState({
-    material_count: 24,
-    product_count: 156,
-  });
-
-
-  const getMaterialandProductNumber = useCallback(async () => {
-    setLoading(true);
+  const loadData = async () => {
     try {
-      const product = await invoke<number>("count_products");
-      setProductCount(product);
-      const material = await invoke<number>("count_materials");
-      setMaterialCount(material);
-    } catch (err) {
-      setError(err as string);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const getRecentInventoryLogs = useCallback(async () => {
-    setLoading(true);
-    try {
+      const materials = await invoke<Material[]>("list_materials");
+      setMaterials(materials);
+      const products = await invoke<Product[]>("list_products");
+      setProducts(products);
       const movements = await invoke<Movement[]>("list_recent_movements");
       setRecentMovements(movements);
-    } catch (err) {
-      setError(err as string);
-    } finally {
-      setLoading(false);
+    } catch (e) {
+      console.error("載入失敗", e);
     }
-  }, []);
-
+  };
 
   useEffect(() => {
-    getMaterialandProductNumber();
-    getRecentInventoryLogs();
-  }, [getMaterialandProductNumber, getRecentInventoryLogs]);
+    loadData();
+  }, []);
 
+  const getIndangerMaterials = () => {
+    return materials.filter((m) => {
+      return m.low_stock_alert !== null && m.current_stock <= m.low_stock_alert;
+    });
+  };
+
+  const filteredMaterials = getIndangerMaterials();
 
   return (
     <div className="space-y-10 pb-12">
-      {/* 歡迎語與日期 */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-soap-stone font-sans tracking-tight">
@@ -99,19 +72,18 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* 數據小卡片 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard
           icon={<Beaker className="text-soap-wood group-hover:text-white" />}
           label="原料種類"
-          value={materialCount}
+          value={materials.length}
           unit="種"
           onClick={() => navigate("/materials")}
         />
         <StatCard
           icon={<Package className="text-soap-wood group-hover:text-white" />}
           label="成品總量"
-          value={productCount}
+          value={products.length}
           unit="塊"
           onClick={() => navigate("/products")}
         />
@@ -132,30 +104,21 @@ export default function Dashboard() {
           </div>
           <div className="bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden">
             <div className="divide-y divide-stone-100">
-              <LowStockRow
-                name="初榨橄欖油"
-                qty={1.2}
-                unit="kg"
-                level="critical"
-              />
-              <LowStockRow
-                name="甜杏仁油"
-                qty={0.5}
-                unit="L"
-                level="critical"
-              />
-              <LowStockRow
-                name="薰衣草精油"
-                qty={80}
-                unit="ml"
-                level="warning"
-              />
-              <LowStockRow
-                name="氫氧化鈉"
-                qty={2.1}
-                unit="kg"
-                level="warning"
-              />
+              <table className="w-full text-left border-collapse">
+                <tbody className="divide-y divide-stone-50 font-medium">
+                  {filteredMaterials.length > 0 ? (
+                    filteredMaterials.map((material) => (
+                      <LowStockRow m={material} key={material.id} />
+                    ))
+                  ) : (
+                    <tr>
+                      <td className="px-6 py-12 text-center text-stone-400">
+                        🎊 恭喜！目前沒有低庫存的原料！🎊
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         </section>
@@ -169,12 +132,11 @@ export default function Dashboard() {
           <div className="bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden">
             <table className="w-full text-left border-collapse">
               <tbody className="divide-y divide-stone-50 font-medium">
-                {recentMovements.length > 0 ? recentMovements.map((movement) => (
-                  <MovementRow
-                    key={movement.id}
-                    m={movement}
-                  />
-                )) : (
+                {recentMovements.length > 0 ? (
+                  recentMovements.map((movement) => (
+                    <MovementRow key={movement.id} m={movement} />
+                  ))
+                ) : (
                   <tr>
                     <td className="px-6 py-12 text-center text-stone-400">
                       暫無異動紀錄
@@ -186,7 +148,7 @@ export default function Dashboard() {
             <div className="bg-stone-50 p-3 text-center">
               <button
                 onClick={() => navigate("/movements")}
-                className="text-xs font-bold text-soap-accent hover:text-soap-stone"
+                className="text-sm font-bold text-soap-accent hover:text-soap-stone"
               >
                 查看完整歷史紀錄
               </button>
@@ -198,7 +160,6 @@ export default function Dashboard() {
   );
 }
 
-// --- 子組件：統計卡片 ---
 function StatCard({ icon, label, value, unit, onClick }: any) {
   return (
     <div
@@ -227,25 +188,21 @@ function StatCard({ icon, label, value, unit, onClick }: any) {
   );
 }
 
-// --- 子組件：低庫存列 ---
-function LowStockRow({ name, qty, unit, level }: LowStockItem) {
+function LowStockRow({ m }: { m: Material }) {
   return (
-    <div className="flex items-center justify-between p-4 hover:bg-stone-50 transition-colors">
-      <div className="flex items-center gap-3">
-        <div
-          className={`w-2 h-2 rounded-full ${level === "critical" ? "bg-red-500 animate-pulse" : "bg-orange-400"}`}
-        />
-        <span className="font-bold text-soap-stone">{name}</span>
-      </div>
-      <div className="text-right">
-        <span
-          className={`font-mono font-bold ${level === "critical" ? "text-red-600" : "text-orange-600"}`}
-        >
-          僅剩 {qty}
-        </span>
-        <span className="text-xs text-soap-accent ml-1">{unit}</span>
-      </div>
-    </div>
+    <tr className="flex items-center justify-between p-4 hover:bg-stone-50 transition-colors">
+      <td className="flex items-center gap-3">
+        <div className={`w-2 h-2 rounded-full "bg-red-500 animate-pulse"`} />
+        <span className="font-bold text-soap-stone">{m.name}</span>
+      </td>
+      <td className="text-left">
+        <span className="font-mono font-bold"> 應備有 {m.low_stock_alert}</span>
+        <span className="text-ms ml-1 font-bold">{m.unit}</span>
+      </td>
+      <td className="text-right text-red-600">
+        <span className="font-mono font-bold">僅剩 {m.current_stock}</span>
+        <span className="text-ms ml-1 font-bold">{m.unit}</span>
+      </td>
+    </tr>
   );
 }
-
