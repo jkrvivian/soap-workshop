@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import {
+  Filter,
   Plus,
   AlertCircle,
   Edit2,
@@ -19,6 +20,9 @@ export default function Materials() {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<
+    "all" | "oil" | "essential_oil" | "chem"
+  >("all");
 
   // UI mode switching
   const [viewMode, setViewMode] = useState<ViewMode>("list");
@@ -40,6 +44,27 @@ export default function Materials() {
   useEffect(() => {
     loadMaterials();
   }, [loadMaterials]);
+
+  const getFilteredMaterials = () => {
+    return materials.filter((m) => {
+      switch (filter) {
+        case "oil":
+          return m.category === "油脂";
+
+        case "essential_oil":
+          return m.category === "精油";
+
+        case "chem":
+          return m.category === "添加物" || m.category === "鹼";
+
+        case "all":
+        default:
+          return true;
+      }
+    });
+  };
+
+  const filteredMaterials = getFilteredMaterials();
 
   // --- keyboard shortcuts ---
   useEffect(() => {
@@ -80,6 +105,50 @@ export default function Materials() {
           </button>
         </div>
 
+        {/* 快捷篩選列 */}
+        <div className="flex gap-4 overflow-x-auto pb-2 items-center">
+          <button
+            onClick={() => setFilter("all")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${
+              filter === "all"
+                ? "bg-soap-wood text-white shadow-sm"
+                : "bg-white border border-stone-200 text-soap-accent hover:border-soap-wood"
+            }`}
+          >
+            <Filter size={14} /> 全部
+          </button>
+          <button
+            onClick={() => setFilter("oil")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${
+              filter === "oil"
+                ? "bg-soap-wood text-white shadow-sm"
+                : "bg-white border border-stone-200 text-soap-accent hover:border-soap-wood"
+            }`}
+          >
+            油脂
+          </button>
+          <button
+            onClick={() => setFilter("essential_oil")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${
+              filter === "essential_oil"
+                ? "bg-soap-wood text-white shadow-sm"
+                : "bg-white border border-stone-200 text-soap-accent hover:border-soap-wood"
+            }`}
+          >
+            精油
+          </button>
+          <button
+            onClick={() => setFilter("chem")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${
+              filter === "chem"
+                ? "bg-soap-wood text-white shadow-sm"
+                : "bg-white border border-stone-200 text-soap-accent hover:border-soap-wood"
+            }`}
+          >
+            鹼 & 添加物
+          </button>
+        </div>
+
         {loading && <p className="text-center py-8">載入中...</p>}
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
@@ -102,7 +171,7 @@ export default function Materials() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100">
-                {materials.length === 0 ? (
+                {filteredMaterials.length === 0 ? (
                   <tr>
                     <td
                       colSpan={6}
@@ -112,7 +181,7 @@ export default function Materials() {
                     </td>
                   </tr>
                 ) : (
-                  materials.map((m) => (
+                  filteredMaterials.map((m) => (
                     <tr
                       key={m.id}
                       className="hover:bg-stone-50 transition-colors group"
