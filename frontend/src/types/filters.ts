@@ -7,18 +7,23 @@ export const MATERIAL_FILTERS = {
   },
   oil: {
     key: "oil",
-    label: "油脂",
-    categories: ["油脂"],
+    label: "油品",
+    categories: ["油品"],
   },
   essential_oil: {
     key: "essential_oil",
-    label: "精油",
-    categories: ["精油"],
+    label: "精油 / 香精",
+    categories: ["精油 / 香精"],
   },
   chem: {
     key: "chem",
-    label: "鹼 & 添加物",
-    categories: ["添加物", "鹼"],
+    label: "添加物",
+    categories: ["添加物"],
+  },
+  wrapper: {
+    key: "wrapper",
+    label: "包裝材料",
+    categories: ["包裝材料"],
   },
 } as const;
 
@@ -55,6 +60,6 @@ export const PRODUCT_FILTERS = {
 
 export type ProductFilterType = keyof typeof PRODUCT_FILTERS;
 
-export const MATERIAL_CATEGORIES = ["油脂", "精油", "添加物", "鹼液"] as const;
+export const MATERIAL_CATEGORIES = ["油品", "精油 / 香精", "添加物", "包裝原料"] as const;
 
 export const PRODUCT_CATEGORIES = ["洗顏", "洗髮", "沐浴", "家事"] as const;

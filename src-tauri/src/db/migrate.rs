@@ -98,10 +98,10 @@ async fn seed_test_data(pool: &SqlitePool) -> Result<(), sqlx::Error> {
         sqlx::query(
             r#"
             INSERT INTO materials (name, category, unit, current_stock, low_stock_alert, created_at) VALUES
-            ('橄欖油', '油脂', 'ml', 5000, 1000, datetime('now')),
-            ('椰子油', '油脂', 'ml', 3000, 500, datetime('now')),
-            ('氫氧化鈉', '鹼', 'g', 2000, 200, datetime('now')),
-            ('薰衣草精油', '精油', 'ml', 200, 50, datetime('now'))
+            ('橄欖油', '油品', 'ml', 5000, 1000, datetime('now')),
+            ('椰子油', '油品', 'ml', 3000, 500, datetime('now')),
+            ('氫氧化鈉', '添加物', 'g', 2000, 200, datetime('now')),
+            ('薰衣草精油', '精油 / 香精', 'ml', 200, 50, datetime('now'))
             "#
         )
         .execute(pool)

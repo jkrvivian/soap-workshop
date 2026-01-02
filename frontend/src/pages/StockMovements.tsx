@@ -417,7 +417,7 @@ function MovementEntryForm({
           <div className="space-y-4">
             <div className="relative">
               <label className="block text-sm font-bold text-soap-stone mb-2">
-                搜尋項目名稱 (油脂、精油、或肥皂名稱)
+                搜尋項目名稱 (油品、精油、或香皂名稱)
               </label>
               <div className="relative">
                 <Search

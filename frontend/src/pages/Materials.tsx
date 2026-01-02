@@ -426,7 +426,7 @@ function CreateEditForm({
           </label>
           <select
             name="category"
-            defaultValue={item?.category ?? "油脂"}
+            defaultValue={item?.category ?? "油品"}
             className="w-full border border-stone-200 rounded-lg"
           >
             {Object.values(MATERIAL_CATEGORIES).map((f) => (
