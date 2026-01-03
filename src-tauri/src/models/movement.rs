@@ -24,16 +24,3 @@ pub struct CreateMovementRequest {
     pub change_amount: f64,
     pub note: Option<String>,
 }
-
-#[derive(Debug, Serialize, Deserialize, FromRow)]
-pub struct InventoryLog {
-    pub id: i64,
-    pub item_id: i64,
-    pub item_type: String,
-    pub change_amount: f64,
-    pub old_stock: f64,
-    pub new_stock: f64,
-    pub action_type: String,
-    pub note: Option<String>,
-    pub created_at: String,
-}

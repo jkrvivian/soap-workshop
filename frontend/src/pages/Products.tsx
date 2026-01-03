@@ -459,7 +459,9 @@ function CreateEditForm({
             disabled={viewMode === "edit"}
             className={`w-full border border-stone-200 rounded-lg ${viewMode === "edit" ? "opacity-50 cursor-not-allowed" : ""}`}
           />
-          {viewMode === "edit" && <p className="text-xs text-stone-400 mt-1">通過異動功能更新</p>}
+          {viewMode === "edit" && (
+            <p className="text-xs text-stone-400 mt-1">通過異動功能更新</p>
+          )}
         </div>
         <div className="col-span-2">
           <label className="block text-sm font-bold text-soap-stone mb-2">

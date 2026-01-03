@@ -60,6 +60,11 @@ export const PRODUCT_FILTERS = {
 
 export type ProductFilterType = keyof typeof PRODUCT_FILTERS;
 
-export const MATERIAL_CATEGORIES = ["油品", "精油 / 香精", "添加物", "包裝原料"] as const;
+export const MATERIAL_CATEGORIES = [
+  "油品",
+  "精油 / 香精",
+  "添加物",
+  "包裝原料",
+] as const;
 
 export const PRODUCT_CATEGORIES = ["洗顏", "洗髮", "沐浴", "家事"] as const;

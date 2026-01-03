@@ -5,7 +5,7 @@ use tauri::{Manager, State};
 use tauri_plugin_dialog::{DialogExt, FilePath};
 
 use crate::models::material::Material;
-use crate::models::movement::InventoryLog;
+use crate::models::movement::Movement;
 use crate::models::product::Product;
 
 #[tauri::command]
@@ -297,10 +297,20 @@ async fn export_products_excel(workbook: &mut Workbook, pool: &SqlitePool) -> Re
 }
 
 async fn export_movements_excel(workbook: &mut Workbook, pool: &SqlitePool) -> Result<(), String> {
-    let movements: Vec<InventoryLog> = sqlx::query_as("SELECT * FROM inventory_logs")
-        .fetch_all(pool)
-        .await
-        .map_err(|e| format!("Failed to fetch movements: {}", e))?;
+    let movements: Vec<Movement> = sqlx::query_as(
+        "
+        SELECT 
+            il.*,
+            COALESCE(m.name, p.name) as item_name,
+            COALESCE(m.unit, p.unit) as item_unit,
+            COALESCE(m.category, p.category) as item_category
+        FROM inventory_logs il
+        LEFT JOIN materials m ON il.item_type = 'material' AND il.item_id = m.id
+        LEFT JOIN products p ON il.item_type = 'product' AND il.item_id = p.id",
+    )
+    .fetch_all(pool)
+    .await
+    .map_err(|e| format!("Failed to fetch movements: {}", e))?;
 
     let worksheet = workbook
         .add_worksheet()
@@ -313,6 +323,7 @@ async fn export_movements_excel(workbook: &mut Workbook, pool: &SqlitePool) -> R
         "ID",
         "項目ID",
         "項目類型",
+        "項目名稱",
         "項目單位",
         "變更數量",
         "舊庫存",
@@ -340,31 +351,37 @@ async fn export_movements_excel(workbook: &mut Workbook, pool: &SqlitePool) -> R
             .write_string(row, 2, &movement.item_type)
             .map_err(|e| format!("Failed to write cell: {}", e))?;
         worksheet
-            .write_number(row, 3, movement.change_amount)
+            .write_string(row, 3, &movement.item_name)
             .map_err(|e| format!("Failed to write cell: {}", e))?;
         worksheet
-            .write_number(row, 4, movement.old_stock)
+            .write_string(row, 4, &movement.item_unit)
             .map_err(|e| format!("Failed to write cell: {}", e))?;
         worksheet
-            .write_number(row, 5, movement.new_stock)
+            .write_number(row, 5, movement.change_amount)
             .map_err(|e| format!("Failed to write cell: {}", e))?;
         worksheet
-            .write_string(row, 6, &movement.action_type)
+            .write_number(row, 6, movement.old_stock)
             .map_err(|e| format!("Failed to write cell: {}", e))?;
         worksheet
-            .write_string(row, 7, &movement.note.clone().unwrap_or_default())
+            .write_number(row, 7, movement.new_stock)
+            .map_err(|e| format!("Failed to write cell: {}", e))?;
+        worksheet
+            .write_string(row, 8, &movement.action_type)
+            .map_err(|e| format!("Failed to write cell: {}", e))?;
+        worksheet
+            .write_string(row, 9, &movement.note.clone().unwrap_or_default())
             .map_err(|e| format!("Failed to write cell: {}", e))?;
 
         // Write created_at as datetime
         if let Ok(dt) = DateTime::parse_from_rfc3339(&movement.created_at) {
             if let Ok(created_time) = ExcelDateTime::from_timestamp(dt.timestamp()) {
                 worksheet
-                    .write_datetime(row, 8, created_time)
+                    .write_datetime(row, 10, created_time)
                     .map_err(|e| format!("Failed to write cell: {}", e))?;
             };
         } else {
             worksheet
-                .write_string(row, 8, &movement.created_at)
+                .write_string(row, 10, &movement.created_at)
                 .map_err(|e| format!("Failed to write cell: {}", e))?;
         }
     }
