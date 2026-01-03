@@ -134,6 +134,7 @@ async fn export_materials_excel(workbook: &mut Workbook, pool: &SqlitePool) -> R
         .map_err(|e| format!("Failed to create Materials sheet: {}", e))?;
 
     let header_format = Format::new().set_bold();
+    let datetime_format = Format::new().set_num_format("yyyy-mm-dd hh:mm:ss");
 
     let headers = vec![
         "ID",
@@ -185,7 +186,7 @@ async fn export_materials_excel(workbook: &mut Workbook, pool: &SqlitePool) -> R
         if let Ok(dt) = DateTime::parse_from_rfc3339(&material.created_at) {
             if let Ok(created_time) = ExcelDateTime::from_timestamp(dt.timestamp()) {
                 worksheet
-                    .write_datetime(row, 7, created_time)
+                    .write_datetime_with_format(row, 7, created_time, &datetime_format)
                     .map_err(|e| format!("Failed to write cell: {}", e))?;
             };
         } else {
@@ -199,7 +200,7 @@ async fn export_materials_excel(workbook: &mut Workbook, pool: &SqlitePool) -> R
             if let Ok(dt) = DateTime::parse_from_rfc3339(deleted) {
                 if let Ok(excel_dt) = ExcelDateTime::from_timestamp(dt.timestamp()) {
                     worksheet
-                        .write_datetime(row, 8, excel_dt)
+                        .write_datetime_with_format(row, 8, excel_dt, &datetime_format)
                         .map_err(|e| format!("Failed to write cell: {}", e))?;
                 };
             } else {
@@ -209,6 +210,22 @@ async fn export_materials_excel(workbook: &mut Workbook, pool: &SqlitePool) -> R
             }
         }
     }
+
+    worksheet
+        .set_column_width(1, 20)
+        .map_err(|e| format!("Failed to set column 1 width {e}"))?;
+    worksheet
+        .set_column_width(2, 10)
+        .map_err(|e| format!("Failed to set column 1 width {e}"))?;
+    worksheet
+        .set_column_width(5, 10)
+        .map_err(|e| format!("Failed to set column 1 width {e}"))?;
+    worksheet
+        .set_column_width(7, 20)
+        .map_err(|e| format!("Failed to set column 1 width {e}"))?;
+    worksheet
+        .set_column_width(8, 20)
+        .map_err(|e| format!("Failed to set column 1 width {e}"))?;
 
     Ok(())
 }
@@ -225,6 +242,7 @@ async fn export_products_excel(workbook: &mut Workbook, pool: &SqlitePool) -> Re
         .map_err(|e| format!("Failed to create Products sheet: {}", e))?;
 
     let header_format = Format::new().set_bold();
+    let datetime_format = Format::new().set_num_format("yyyy-mm-dd hh:mm:ss");
 
     let headers = vec![
         "ID",
@@ -268,7 +286,7 @@ async fn export_products_excel(workbook: &mut Workbook, pool: &SqlitePool) -> Re
         if let Ok(dt) = DateTime::parse_from_rfc3339(&product.created_at) {
             if let Ok(created_time) = ExcelDateTime::from_timestamp(dt.timestamp()) {
                 worksheet
-                    .write_datetime(row, 6, created_time)
+                    .write_datetime_with_format(row, 6, created_time, &datetime_format)
                     .map_err(|e| format!("Failed to write cell: {}", e))?;
             };
         } else {
@@ -292,6 +310,19 @@ async fn export_products_excel(workbook: &mut Workbook, pool: &SqlitePool) -> Re
             }
         }
     }
+
+    worksheet
+        .set_column_width(1, 20)
+        .map_err(|e| format!("Failed to set column 1 width {e}"))?;
+    worksheet
+        .set_column_width(2, 10)
+        .map_err(|e| format!("Failed to set column 1 width {e}"))?;
+    worksheet
+        .set_column_width(6, 20)
+        .map_err(|e| format!("Failed to set column 1 width {e}"))?;
+    worksheet
+        .set_column_width(7, 20)
+        .map_err(|e| format!("Failed to set column 1 width {e}"))?;
 
     Ok(())
 }
@@ -318,6 +349,7 @@ async fn export_movements_excel(workbook: &mut Workbook, pool: &SqlitePool) -> R
         .map_err(|e| format!("Failed to create Movements sheet: {}", e))?;
 
     let header_format = Format::new().set_bold();
+    let datetime_format = Format::new().set_num_format("yyyy-mm-dd hh:mm:ss");
 
     let headers = vec![
         "ID",
@@ -376,7 +408,7 @@ async fn export_movements_excel(workbook: &mut Workbook, pool: &SqlitePool) -> R
         if let Ok(dt) = DateTime::parse_from_rfc3339(&movement.created_at) {
             if let Ok(created_time) = ExcelDateTime::from_timestamp(dt.timestamp()) {
                 worksheet
-                    .write_datetime(row, 10, created_time)
+                    .write_datetime_with_format(row, 10, created_time, &datetime_format)
                     .map_err(|e| format!("Failed to write cell: {}", e))?;
             };
         } else {
@@ -385,6 +417,16 @@ async fn export_movements_excel(workbook: &mut Workbook, pool: &SqlitePool) -> R
                 .map_err(|e| format!("Failed to write cell: {}", e))?;
         }
     }
+
+    worksheet
+        .set_column_width(3, 20)
+        .map_err(|e| format!("Failed to set column 1 width {e}"))?;
+    worksheet
+        .set_column_width(9, 20)
+        .map_err(|e| format!("Failed to set column 1 width {e}"))?;
+    worksheet
+        .set_column_width(10, 20)
+        .map_err(|e| format!("Failed to set column 1 width {e}"))?;
 
     Ok(())
 }
