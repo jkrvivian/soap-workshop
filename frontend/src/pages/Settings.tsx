@@ -1,19 +1,38 @@
 import { invoke } from "@tauri-apps/api/core";
+import { useState } from "react";
 import {
   Settings as SettingsIcon,
   Database,
   Download,
   Upload,
   Trash2,
+  AlertCircle,
 } from "lucide-react";
 
 export default function Settings() {
+  const [error, setError] = useState<string | null>(null);
+
   const handleExportDB = async () => {
     try {
       const path = await invoke<string>("export_database");
       console.log(`備份成功！檔案已存至：${path}`);
     } catch (e) {
+      setError(("備份失敗: " + e) as string);
       console.log(`備份失敗: ${e}`);
+    } finally {
+      setError(null);
+    }
+  };
+
+  const handleExportDBExcel = async () => {
+    try {
+      const path = await invoke<string>("export_database_excel");
+      console.log(`匯出成功！檔案已存至：${path}`);
+    } catch (e) {
+      setError(("備份失敗: " + e) as string);
+      console.log(`匯出失敗: ${e}`);
+    } finally {
+      setError(null);
     }
   };
 
@@ -22,7 +41,10 @@ export default function Settings() {
       const path = await invoke<string>("import_database");
       console.log(`匯入資料庫檔 ${path} 成功！`);
     } catch (e) {
+      setError(("備份失敗: " + e) as string);
       console.log(`匯入失敗: ${e}`);
+    } finally {
+      setError(null);
     }
   };
 
@@ -34,6 +56,13 @@ export default function Settings() {
         </h1>
         <p className="text-soap-accent">調整工作室系統的使用偏好與資料安全</p>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
+          <AlertCircle className="text-red-600" size={20} />
+          <p className="text-red-600 font-medium">錯誤: {error}</p>
+        </div>
+      )}
 
       {/* 右側：實際設定內容 */}
       <div className="space-y-6">
@@ -54,6 +83,21 @@ export default function Settings() {
               <div className="text-center">
                 <p className="font-bold text-soap-stone">備份資料庫</p>
                 <p className="text-[14px] text-soap-accent">匯出為.db 檔案</p>
+              </div>
+            </button>
+
+            <button
+              onClick={handleExportDBExcel}
+              className="p-4 border-2 border-stone-100 rounded-2xl flex flex-col items-center gap-3 hover:border-soap-wood hover:bg-stone-50 transition-all group"
+            >
+              <div className="p-3 bg-soap-beige rounded-full text-soap-wood group-hover:scale-110 transition-transform">
+                <Download size={24} />
+              </div>
+              <div className="text-center">
+                <p className="font-bold text-soap-stone">匯出資料庫</p>
+                <p className="text-[14px] text-soap-accent">
+                  匯出為 Excel 檔案
+                </p>
               </div>
             </button>
 

@@ -1,6 +1,12 @@
+use chrono::DateTime;
+use rust_xlsxwriter::{ExcelDateTime, Format, Workbook};
 use sqlx::SqlitePool;
 use tauri::{Manager, State};
 use tauri_plugin_dialog::{DialogExt, FilePath};
+
+use crate::models::material::Material;
+use crate::models::movement::InventoryLog;
+use crate::models::product::Product;
 
 #[tauri::command]
 pub async fn export_database(
@@ -71,4 +77,297 @@ pub async fn import_database(
         .blocking_show();
 
     app.restart();
+}
+
+#[tauri::command]
+pub async fn export_database_excel(
+    app: tauri::AppHandle,
+    pool: State<'_, SqlitePool>,
+) -> Result<String, String> {
+    let export_file = app
+        .dialog()
+        .file()
+        .add_filter("Excel", &["xlsx"])
+        .set_file_name(&format!(
+            "soap-export_{}.xlsx",
+            chrono::Utc::now().format("%Y%m%d_%H%M%S")
+        ))
+        .blocking_save_file();
+
+    let export_path = match export_file {
+        Some(FilePath::Path(p)) => p.display().to_string(),
+        _ => return Err("No file path selected".to_string()),
+    };
+
+    let mut workbook = Workbook::new();
+
+    // Export Materials sheet
+    export_materials_excel(&mut workbook, &pool).await?;
+
+    // Export Products sheet
+    export_products_excel(&mut workbook, &pool).await?;
+
+    // Export Movements sheet
+    export_movements_excel(&mut workbook, &pool).await?;
+
+    workbook
+        .save(&export_path)
+        .map_err(|e| format!("Failed to close Excel file: {}", e))?;
+
+    app.dialog()
+        .message(format!("資料庫已成功匯出至 Excel 檔案！\n{}", export_path))
+        .title("匯出成功")
+        .blocking_show();
+
+    Ok(export_path)
+}
+
+async fn export_materials_excel(workbook: &mut Workbook, pool: &SqlitePool) -> Result<(), String> {
+    let materials: Vec<Material> = sqlx::query_as("SELECT * FROM materials")
+        .fetch_all(pool)
+        .await
+        .map_err(|e| format!("Failed to fetch materials: {}", e))?;
+
+    let worksheet = workbook
+        .add_worksheet()
+        .set_name("Material")
+        .map_err(|e| format!("Failed to create Materials sheet: {}", e))?;
+
+    let header_format = Format::new().set_bold();
+
+    let headers = vec![
+        "ID",
+        "名稱",
+        "分類",
+        "單位",
+        "目前庫存",
+        "低庫存警告",
+        "備註",
+        "建立時間",
+        "刪除時間",
+    ];
+
+    for (col, header) in headers.iter().enumerate() {
+        worksheet
+            .write_with_format(0, col as u16, *header, &header_format)
+            .map_err(|e| format!("Failed to write header: {}", e))?;
+    }
+
+    for (row, material) in materials.iter().enumerate() {
+        let row = (row + 1) as u32;
+        worksheet
+            .write_number(row, 0, material.id as f64)
+            .map_err(|e| format!("Failed to write cell: {}", e))?;
+        worksheet
+            .write_string(row, 1, &material.name)
+            .map_err(|e| format!("Failed to write cell: {}", e))?;
+        worksheet
+            .write_string(row, 2, &material.category)
+            .map_err(|e| format!("Failed to write cell: {}", e))?;
+        worksheet
+            .write_string(row, 3, &material.unit)
+            .map_err(|e| format!("Failed to write cell: {}", e))?;
+        worksheet
+            .write_number(row, 4, material.current_stock)
+            .map_err(|e| format!("Failed to write cell: {}", e))?;
+
+        if let Some(alert) = material.low_stock_alert {
+            worksheet
+                .write_number(row, 5, alert)
+                .map_err(|e| format!("Failed to write cell: {}", e))?;
+        }
+
+        worksheet
+            .write_string(row, 6, &material.note.clone().unwrap_or_default())
+            .map_err(|e| format!("Failed to write cell: {}", e))?;
+
+        // Parse and write created_at as datetime
+        if let Ok(dt) = DateTime::parse_from_rfc3339(&material.created_at) {
+            if let Ok(created_time) = ExcelDateTime::from_timestamp(dt.timestamp()) {
+                worksheet
+                    .write_datetime(row, 7, created_time)
+                    .map_err(|e| format!("Failed to write cell: {}", e))?;
+            };
+        } else {
+            worksheet
+                .write_string(row, 7, &material.created_at)
+                .map_err(|e| format!("Failed to write cell: {}", e))?;
+        }
+
+        // Write deleted_at as datetime if exists
+        if let Some(deleted) = &material.deleted_at {
+            if let Ok(dt) = DateTime::parse_from_rfc3339(deleted) {
+                if let Ok(excel_dt) = ExcelDateTime::from_timestamp(dt.timestamp()) {
+                    worksheet
+                        .write_datetime(row, 8, excel_dt)
+                        .map_err(|e| format!("Failed to write cell: {}", e))?;
+                };
+            } else {
+                worksheet
+                    .write_string(row, 8, deleted)
+                    .map_err(|e| format!("Failed to write cell: {}", e))?;
+            }
+        }
+    }
+
+    Ok(())
+}
+
+async fn export_products_excel(workbook: &mut Workbook, pool: &SqlitePool) -> Result<(), String> {
+    let products: Vec<Product> = sqlx::query_as("SELECT * FROM products")
+        .fetch_all(pool)
+        .await
+        .map_err(|e| format!("Failed to fetch products: {}", e))?;
+
+    let worksheet = workbook
+        .add_worksheet()
+        .set_name("Products")
+        .map_err(|e| format!("Failed to create Products sheet: {}", e))?;
+
+    let header_format = Format::new().set_bold();
+
+    let headers = vec![
+        "ID",
+        "名稱",
+        "分類",
+        "單位",
+        "目前庫存",
+        "備註",
+        "建立時間",
+        "刪除時間",
+    ];
+
+    for (col, header) in headers.iter().enumerate() {
+        worksheet
+            .write_with_format(0, col as u16, *header, &header_format)
+            .map_err(|e| format!("Failed to write header: {}", e))?;
+    }
+
+    for (row, product) in products.iter().enumerate() {
+        let row = (row + 1) as u32;
+        worksheet
+            .write_number(row, 0, product.id as f64)
+            .map_err(|e| format!("Failed to write cell: {}", e))?;
+        worksheet
+            .write_string(row, 1, &product.name)
+            .map_err(|e| format!("Failed to write cell: {}", e))?;
+        worksheet
+            .write_string(row, 2, &product.category)
+            .map_err(|e| format!("Failed to write cell: {}", e))?;
+        worksheet
+            .write_string(row, 3, &product.unit)
+            .map_err(|e| format!("Failed to write cell: {}", e))?;
+        worksheet
+            .write_number(row, 4, product.current_stock as f64)
+            .map_err(|e| format!("Failed to write cell: {}", e))?;
+        worksheet
+            .write_string(row, 5, &product.note.clone().unwrap_or_default())
+            .map_err(|e| format!("Failed to write cell: {}", e))?;
+
+        // Write created_at as datetime
+        if let Ok(dt) = DateTime::parse_from_rfc3339(&product.created_at) {
+            if let Ok(created_time) = ExcelDateTime::from_timestamp(dt.timestamp()) {
+                worksheet
+                    .write_datetime(row, 6, created_time)
+                    .map_err(|e| format!("Failed to write cell: {}", e))?;
+            };
+        } else {
+            worksheet
+                .write_string(row, 6, &product.created_at)
+                .map_err(|e| format!("Failed to write cell: {}", e))?;
+        }
+
+        // Write deleted_at as datetime if exists
+        if let Some(deleted) = &product.deleted_at {
+            if let Ok(dt) = DateTime::parse_from_rfc3339(deleted) {
+                if let Ok(deleted_time) = ExcelDateTime::from_timestamp(dt.timestamp()) {
+                    worksheet
+                        .write_datetime(row, 7, deleted_time)
+                        .map_err(|e| format!("Failed to write cell: {}", e))?;
+                };
+            } else {
+                worksheet
+                    .write_string(row, 7, deleted)
+                    .map_err(|e| format!("Failed to write cell: {}", e))?;
+            }
+        }
+    }
+
+    Ok(())
+}
+
+async fn export_movements_excel(workbook: &mut Workbook, pool: &SqlitePool) -> Result<(), String> {
+    let movements: Vec<InventoryLog> = sqlx::query_as("SELECT * FROM inventory_logs")
+        .fetch_all(pool)
+        .await
+        .map_err(|e| format!("Failed to fetch movements: {}", e))?;
+
+    let worksheet = workbook
+        .add_worksheet()
+        .set_name("Movements")
+        .map_err(|e| format!("Failed to create Movements sheet: {}", e))?;
+
+    let header_format = Format::new().set_bold();
+
+    let headers = vec![
+        "ID",
+        "項目ID",
+        "項目類型",
+        "項目單位",
+        "變更數量",
+        "舊庫存",
+        "新庫存",
+        "操作類型",
+        "備註",
+        "建立時間",
+    ];
+
+    for (col, header) in headers.iter().enumerate() {
+        worksheet
+            .write_with_format(0, col as u16, *header, &header_format)
+            .map_err(|e| format!("Failed to write header: {}", e))?;
+    }
+
+    for (row, movement) in movements.iter().enumerate() {
+        let row = (row + 1) as u32;
+        worksheet
+            .write_number(row, 0, movement.id as f64)
+            .map_err(|e| format!("Failed to write cell: {}", e))?;
+        worksheet
+            .write_number(row, 1, movement.item_id as f64)
+            .map_err(|e| format!("Failed to write cell: {}", e))?;
+        worksheet
+            .write_string(row, 2, &movement.item_type)
+            .map_err(|e| format!("Failed to write cell: {}", e))?;
+        worksheet
+            .write_number(row, 3, movement.change_amount)
+            .map_err(|e| format!("Failed to write cell: {}", e))?;
+        worksheet
+            .write_number(row, 4, movement.old_stock)
+            .map_err(|e| format!("Failed to write cell: {}", e))?;
+        worksheet
+            .write_number(row, 5, movement.new_stock)
+            .map_err(|e| format!("Failed to write cell: {}", e))?;
+        worksheet
+            .write_string(row, 6, &movement.action_type)
+            .map_err(|e| format!("Failed to write cell: {}", e))?;
+        worksheet
+            .write_string(row, 7, &movement.note.clone().unwrap_or_default())
+            .map_err(|e| format!("Failed to write cell: {}", e))?;
+
+        // Write created_at as datetime
+        if let Ok(dt) = DateTime::parse_from_rfc3339(&movement.created_at) {
+            if let Ok(created_time) = ExcelDateTime::from_timestamp(dt.timestamp()) {
+                worksheet
+                    .write_datetime(row, 8, created_time)
+                    .map_err(|e| format!("Failed to write cell: {}", e))?;
+            };
+        } else {
+            worksheet
+                .write_string(row, 8, &movement.created_at)
+                .map_err(|e| format!("Failed to write cell: {}", e))?;
+        }
+    }
+
+    Ok(())
 }

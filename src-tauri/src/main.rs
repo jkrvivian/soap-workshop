@@ -27,6 +27,7 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             commands::db_cmd::export_database,
+            commands::db_cmd::export_database_excel,
             commands::db_cmd::import_database,
             commands::material_cmd::list_materials,
             commands::material_cmd::add_material,
